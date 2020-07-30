@@ -1,0 +1,128 @@
+Private Sub CommandButton1_Click()
+
+Dim output As ADODB.Stream
+Set output = New ADODB.Stream
+
+With output
+    .Type = adTypeText
+    .Charset = "UTF-8"
+    .LineSeparator = adLF
+    .Open
+End With
+
+Dim sheet As Worksheet
+Set sheet = ActiveSheet
+
+Dim ws As Worksheet
+Set ws = ThisWorkbook.Worksheets(sheet.Name)
+
+Dim sheetName As String
+'sheetName = ActiveSheet.Name
+sheetName = ws.Cells(2, 2).value
+
+Dim datFile As String
+Dim fileName As String
+fileName = sheetName & ".sql"
+datFile = ActiveWorkbook.Path & "\" & fileName
+'Open datFile For Output As #1
+
+
+Dim printStr As String
+Dim colmun As String
+Dim tmpCol As String
+Dim j As Long
+Dim startJ As String
+Dim startRow As Integer
+startRow = 5
+startJ = 3
+j = startJ
+
+'カラム生成
+Do While ws.Cells(startRow, j).value <> ""
+    tmpCol = ws.Cells(startRow, j).value
+    If j > 3 Then
+        column = "," & tmpCol
+        printStr = printStr + column
+    Else
+        printStr = "insert into " + sheetName + vbCrLf + "("
+        column = ws.Cells(5, j).value
+        printStr = printStr + column
+
+    End If
+
+    j = j + 1
+
+Loop
+    printStr = printStr + ") values"
+    'Print #1, printStr
+  output.WriteText printStr, adWriteLine
+
+Dim startValue As Integer
+startValue = startRow + 1
+
+'データ最大数
+Dim x As Integer
+x = startValue
+Do While ws.Cells(x, 3).value <> ""
+    x = x + 1
+Loop
+
+'データ生成
+Dim printVlaue As String
+Dim endValue As Integer
+endValue = x - 1
+
+Dim endJ As Integer
+endJ = j - 1
+Dim columnValue As String
+Dim tmpVal As String
+
+Dim i As Integer, k As Integer
+    For k = startValue To endValue
+        For i = startJ To endJ
+
+        If i = startJ Then
+            printVlaue = printVlaue + "("
+        End If
+
+            tmpVal = ws.Cells(k, i).value
+            If tmpVal = "null" Then
+                tmpVal = tmpVal
+            Else
+                tmpVal = "'" + tmpVal + "'"
+            End If
+
+            If startJ = i Then
+                printVlaue = printVlaue + tmpVal
+            Else
+                columnValue = "," + tmpVal
+                printVlaue = printVlaue + columnValue
+
+
+            End If
+
+        If i = endJ Then
+        printVlaue = printVlaue + ")"
+        End If
+
+        Next i
+
+        If k = endValue Then
+            printVlaue = printVlaue + ";" + vbCrLf
+        Else
+            printVlaue = printVlaue + "," + vbCrLf
+        End If
+
+    Next k
+
+
+'Print #1, printVlaue;
+'Close #1
+
+
+  output.WriteText printVlaue, adWriteLine
+  output.SaveToFile ActiveWorkbook.Path & "\" & fileName, 2
+  output.Close
+
+MsgBox "出力しました。"
+End Sub
